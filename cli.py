@@ -167,41 +167,57 @@ def create_course_panel(udemy: Udemy, total_courses: int) -> Panel:
 def create_scraping_thread(site: str):
     code_name = scraper_dict[site]
     task_id = udemy.progress.add_task(site, total=100)
-    try:
-        threading.Thread(target=getattr(scraper, code_name), daemon=True).start()
-        while getattr(scraper, f"{code_name}_length") == 0:
-            time.sleep(0.1)
-        if getattr(scraper, f"{code_name}_length") == -1:
-            raise Exception(f"Error in: {site}")
+    max_retries = 3
+    for attempt in range(1, max_retries + 1):
+        try:
+            threading.Thread(target=getattr(scraper, code_name), daemon=True).start()
+            # Wait up to 1 minute for scraper to start (length != 0)
+            start_time = time.time()
+            while getattr(scraper, f"{code_name}_length") == 0:
+                if time.time() - start_time > 60:
+                    raise TimeoutError(f"Timeout waiting for {site} scraper to start.")
+                time.sleep(0.1)
+            if getattr(scraper, f"{code_name}_length") == -1:
+                raise Exception(f"Error in: {site}")
 
-        udemy.progress.update(task_id, total=getattr(scraper, f"{code_name}_length"))
+            udemy.progress.update(task_id, total=getattr(scraper, f"{code_name}_length"))
 
-        while not getattr(scraper, f"{code_name}_done") and not getattr(
-            scraper, f"{code_name}_error"
-        ):
-            current = getattr(scraper, f"{code_name}_progress")
+            # Wait up to 1 minute for scraper to finish
+            start_time = time.time()
+            while not getattr(scraper, f"{code_name}_done") and not getattr(
+                scraper, f"{code_name}_error"
+            ):
+                if time.time() - start_time > 60:
+                    raise TimeoutError(f"Timeout waiting for {site} scraper to finish.")
+                current = getattr(scraper, f"{code_name}_progress")
+                udemy.progress.update(
+                    task_id,
+                    completed=current,
+                    total=getattr(scraper, f"{code_name}_length"),
+                )
+                time.sleep(0.1)
+
             udemy.progress.update(
-                task_id,
-                completed=current,
-                total=getattr(scraper, f"{code_name}_length"),
+                task_id, completed=getattr(scraper, f"{code_name}_length")
             )
-            time.sleep(0.1)
+            logger.debug(
+                f"Courses Found {code_name}: {len(getattr(scraper, f'{code_name}_data'))}"
+            )
 
-        udemy.progress.update(
-            task_id, completed=getattr(scraper, f"{code_name}_length")
-        )
-        logger.debug(
-            f"Courses Found {code_name}: {len(getattr(scraper, f'{code_name}_data'))}"
-        )
-
-        if getattr(scraper, f"{code_name}_error"):
-            raise Exception(f"Error in: {site}")
-    except Exception:
-        error = getattr(scraper, f"{code_name}_error", traceback.format_exc())
-        logger.error(f"Error in {site}: {error}")
-        console.print(f"[bold red]Error in {site}[/bold red]")
-        # Do not exit, just continue
-        return
+            if getattr(scraper, f"{code_name}_error"):
+                raise Exception(f"Error in: {site}")
+            # Success, break out of retry loop
+            return
+        except Exception as e:
+            error = getattr(scraper, f"{code_name}_error", traceback.format_exc())
+            logger.error(f"Error in {site} (attempt {attempt}): {error}")
+            console.print(f"[bold red]Error in {site} (attempt {attempt}/3)[/bold red]")
+            if attempt == max_retries:
+                # Do not exit, just continue after last attempt
+                return
+            else:
+                console.print(f"[yellow]Retrying {site} in 1 second...[/yellow]")
+                time.sleep(1)
 
 
 if __name__ == "__main__":
