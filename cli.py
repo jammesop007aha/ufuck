@@ -151,8 +151,23 @@ if __name__ == "__main__":
 
         # Start scraping and enrollment quietly
         scraper = Scraper(udemy.sites)
-        udemy.progress = Progress() # Create empty progress for compatibility
-        udemy.scraped_data = scraper.get_scraped_courses(create_scraping_thread)
+        # Remove progress bar to prevent display issues
+        udemy.progress = None 
+        # Use a simpler scraping function
+        udemy.scraped_data = []
+        for site in udemy.sites:
+            code_name = scraper_dict[site]
+            threading.Thread(target=getattr(scraper, code_name), daemon=True).start()
+            time.sleep(0.1)
+        # Wait for all scrapers to finish
+        while not all(getattr(scraper, f"{scraper_dict[site]}_done") for site in udemy.sites):
+            time.sleep(0.5)
+        # Combine results
+        for site in udemy.sites:
+            courses = getattr(scraper, f"{scraper_dict[site]}_data")
+            for course in courses:
+                course.site = site
+                udemy.scraped_data.append(course)
         
         try:
             udemy.start_new_enroll()
