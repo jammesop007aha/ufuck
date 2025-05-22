@@ -314,7 +314,6 @@ if __name__ == "__main__":
         total_courses = len(udemy.scraped_data)
         console.print(f"[green]Found {total_courses} courses to process[/green]")
 
-        # No Live layout, no progress updates, just process all courses
         udemy.total_courses_processed = 0
         udemy.total_courses = total_courses
         try:
@@ -326,26 +325,16 @@ if __name__ == "__main__":
                 "An unexpected error occurred", error=e, exit_program=False
             )
 
-        # Show results after all processing is done
-        console.print(
-            Panel.fit(f"[bold blue]Enrollment Results[/bold blue]", border_style="cyan")
-        )
-
+        # Only show results after all processing is done
+        console.print(Panel.fit(f"[bold blue]Enrollment Results[/bold blue]", border_style="cyan"))
         table = Table(box=box.ROUNDED)
         table.add_column("Stat", style="cyan")
         table.add_column("Value", style="yellow")
-
-        table.add_row(
-            "Successfully Enrolled", f"[green]{udemy.successfully_enrolled_c}[/green]"
-        )
-        table.add_row(
-            "Amount Saved",
-            f"[green]{round(udemy.amount_saved_c, 2)} {udemy.currency.upper()}[/green]",
-        )
+        table.add_row("Successfully Enrolled", f"[green]{udemy.successfully_enrolled_c}[/green]")
+        table.add_row("Amount Saved", f"[green]{round(udemy.amount_saved_c, 2)} {udemy.currency.upper()}[/green]")
         table.add_row("Already Enrolled", f"[cyan]{udemy.already_enrolled_c}[/cyan]")
         table.add_row("Excluded Courses", f"[yellow]{udemy.excluded_c}[/yellow]")
         table.add_row("Expired Courses", f"[red]{udemy.expired_c}[/red]")
-
         console.print(table)
 
     except Exception as e:
