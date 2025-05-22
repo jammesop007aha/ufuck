@@ -314,34 +314,19 @@ if __name__ == "__main__":
         total_courses = len(udemy.scraped_data)
         console.print(f"[green]Found {total_courses} courses to process[/green]")
 
-        layout = create_layout()
-        layout["header"].update(create_header())
-        layout["footer"].update(create_footer())
-        layout["main"]["course_info"].update(create_course_panel(udemy, total_courses))
-        layout["main"]["stats"].update(create_stats_panel(udemy))
-
+        # No Live layout, no progress updates, just process all courses
         udemy.total_courses_processed = 0
         udemy.total_courses = total_courses
+        try:
+            udemy.start_new_enroll()
+        except KeyboardInterrupt:
+            console.print("[bold yellow]Process interrupted by user[/bold yellow]")
+        except Exception as e:
+            handle_error(
+                "An unexpected error occurred", error=e, exit_program=False
+            )
 
-        with Live(layout, screen=False, transient=True) as live:
-
-            def update_progress():
-                layout["main"]["course_info"].update(
-                    create_course_panel(udemy, total_courses)
-                )
-                layout["main"]["stats"].update(create_stats_panel(udemy))
-                live.update(layout)
-
-            udemy.update_progress = update_progress
-
-            try:
-                udemy.start_new_enroll()
-            except KeyboardInterrupt:
-                console.print("[bold yellow]Process interrupted by user[/bold yellow]")
-            except Exception as e:
-                handle_error(
-                    "An unexpected error occurred", error=e, exit_program=False
-                )
+        # Show results after all processing is done
         console.print(
             Panel.fit(f"[bold blue]Enrollment Results[/bold blue]", border_style="cyan")
         )
