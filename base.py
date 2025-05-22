@@ -1204,6 +1204,11 @@ class Udemy:
             return False
         return slug in self.enrolled_courses
 
+    def update_progress(self):
+        """Update the progress of course enrollment."""
+        # Removed real-time progress updates to prevent main loop issues
+        pass
+
     def start_new_enroll(
         self,
     ):  # no queue, bulk checkout - Now filters courses first, Experimental
