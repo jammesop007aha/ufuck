@@ -188,5 +188,11 @@ if __name__ == "__main__":
         table.add_row("Expired Courses", f"[red]{udemy.expired_c}[/red]")
         console.print(table)
 
+        # Properly terminate server-side session
+        try:
+            udemy.logout()
+        except Exception as e:
+            handle_error("Error during logout", error=e, exit_program=False)
+
     except Exception as e:
         handle_error("A critical error occurred", error=e, exit_program=True)
