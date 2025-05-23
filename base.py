@@ -739,6 +739,41 @@ class Udemy:
         # Log program start
         logger.info(f"Program started - {self.interface} mode")
 
+    def logout(self):
+        """Properly terminate the server-side session by calling Udemy's logout API"""
+        logger.info("Logging out and terminating server-side session")
+
+        # Call the logout API endpoint
+        try:
+            headers = {
+                "User-Agent": "okhttp/4.9.2 UdemyAndroid 8.9.2(499) (phone)",
+                "Accept": "application/json, text/plain, */*",
+                "Accept-Language": "en-US",
+                "X-Requested-With": "XMLHttpRequest",
+                "Origin": "https://www.udemy.com",
+                "DNT": "1",
+                "Connection": "keep-alive",
+            }
+
+            r = self.client.post(
+                "https://www.udemy.com/api-2.0/auth/logout/",
+                headers=headers,
+            )
+
+            if r.status_code == 200:
+                logger.info("Successfully logged out and terminated server session")
+            else:
+                logger.error(f"Logout failed with status code {r.status_code}")
+                logger.error(f"Response: {r.text}")
+
+        except Exception as e:
+            logger.error(f"Error during logout: {str(e)}")
+            raise
+        finally:
+            # Clear the session and cookies
+            self.client.cookies.clear()
+            self.client.close()
+
     def print(self, content: str, color: str = "red", **kargs):
         content = str(content)
 
