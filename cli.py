@@ -176,17 +176,8 @@ if __name__ == "__main__":
         except Exception as e:
             handle_error("An unexpected error occurred", error=e, exit_program=False)
 
-        # Only show results after all processing is done
-        console.print(Panel.fit(f"[bold blue]Enrollment Results[/bold blue]", border_style="cyan"))
-        table = Table(box=box.ROUNDED)
-        table.add_column("Stat", style="cyan")
-        table.add_column("Value", style="yellow")
-        table.add_row("Successfully Enrolled", f"[green]{udemy.successfully_enrolled_c}[/green]")
-        table.add_row("Amount Saved", f"[green]{round(udemy.amount_saved_c, 2)} {udemy.currency.upper()}[/green]")
-        table.add_row("Already Enrolled", f"[cyan]{udemy.already_enrolled_c}[/cyan]")
-        table.add_row("Excluded Courses", f"[yellow]{udemy.excluded_c}[/yellow]")
-        table.add_row("Expired Courses", f"[red]{udemy.expired_c}[/red]")
-        console.print(table)
+        # Just show done message after completion
+        console.print("[green]Done![/green]")
 
         # Properly terminate server-side session
         try:
